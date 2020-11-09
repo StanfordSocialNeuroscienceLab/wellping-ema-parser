@@ -12,7 +12,9 @@ This program will do the rest!
 # ---------- IMPORTS
 import json
 import sys
+import pandas as pd
 from parser import *                                                    # Cowboy Emoji
+from devices import *
 
 # --------- FILE SYSTEM HIERARCHY
 here = os.getcwd()                                                      # Define local file path
@@ -36,6 +38,7 @@ output_name=temp_name[:-5]
 log = open("{}.txt".format(output_name), "w")
 keys_outer = list(data.keys())                                          # Isolate participant user names
 
+print("Parsing EMA responses....")
 for ix in tqdm(range(len(keys_outer))):                                 # Loop through user names and parse data
     temp = data[keys_outer[ix]]                                         # See wrapper for helper function implementation
     username = keys_outer[ix]
@@ -47,6 +50,20 @@ sleep(1)
 print("\nCombining all files...")
 sleep(1)
 
-output(output_name)
+output(output_name)                                                     # Push clean CSV to output directory
+
+# -------- LOOP THROUGH DEVICE ID FUNCTION
+devices = pd.DataFrame()                                                # Empty devices DF to append into
+print('\nScraping device information...')
+
+for ix in tqdm(range(len(keys_outer))):
+    temp = data[keys_outer[ix]]
+    username = keys_outer[ix]
+    devices = devices.append(parseDevices(temp, username),              # Parse participant device info + append to DF
+                             ignore_index=True, sort=False)
+
+pushDevices(devices,                                                    # Push devices CSV to output directory
+            output_directory=(there + "/99_Composite-CSV/"),
+            output_name=output_name)
 
 print("\nAll files combined!")
