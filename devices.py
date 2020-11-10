@@ -15,37 +15,35 @@ import os
 
 def parseDevices(inData, user):
     """"
-    Fill
+    Loops through participant response dictionaries
+    Isolates user device data (e.g., Apple iPhone XR, iOS version xx.xx)
+    Concatenates values to master device output CSV
     """
 
-    temp = pd.DataFrame()
+    temp = pd.DataFrame()                                                                   # Empty DF to append into
 
     for id in list(inData.keys()):
-        sparse = inData[id]["user"]
-
+        sparse = inData[id]["user"]                                                         # Isolate device + app data
         device = pd.DataFrame(sparse['installation']).loc[:, "device"].reset_index()
         app = pd.DataFrame(sparse['installation']).loc[:, 'app'].reset_index()
-        app.columns = ['index', 'device']
-        all_data = pd.concat([device, app]).dropna().reset_index(drop=True)
-        all_data.columns = ['var', 'device']
-        all_data['user'] = user
-
-        all_data_long = all_data.pivot(columns="var", values="device", index="user")
+        app.columns = ['index', 'device']                                                   # Rename columns to match
+        all_data = pd.concat([device, app]).dropna().reset_index(drop=True)                 # Combine above DFs
+        all_data.columns = ['var', 'device']                                                # Rename output columns
+        all_data['user'] = user                                                             # Impute username into DF
+        all_data_long = all_data.pivot(columns="var", values="device", index="user")        # Long to wide pivot
         all_data_long['user'] = user
-
-        temp = temp.append(all_data_long, ignore_index=True, sort=False)
+        temp = temp.append(all_data_long, ignore_index=True, sort=False)                    # Append to output DF
 
     return temp
 
 
 def deviceCleanup(DF):
     """
-    Fill
+    Fills null values and reorganizes device DF
     """
 
-    DF.fillna("NA", inplace=True)
-
-    columns = ["user", "brand", "osName", "osVersion"]
+    DF.fillna("NA", inplace=True)                                                           # Fill NA values
+    columns = ["user", "brand", "osName", "osVersion"]                                      # Left-most columns
     extra_vars = []
 
     for var in DF.columns:
@@ -55,19 +53,17 @@ def deviceCleanup(DF):
             continue
 
     extra_vars.sort()
-    columns.extend(extra_vars)
-
-    DF = DF[columns]
-
+    columns.extend(extra_vars)                                                              # List of all vars
+    DF = DF[columns]                                                                        # Reorder DF columns
     return DF
 
 
 def pushDevices(DF, output_directory, output_name):
     """
-    Fill
+    Pushes cleaned device DF to output directory
     """
 
-    clean = deviceCleanup(DF)
-    os.chdir(output_directory)
-    output_name = "{}_deviceInfo.csv".format(output_name)
-    clean.to_csv(output_name, index=False)
+    clean = deviceCleanup(DF)                                                               # Clean device DF w/ helper
+    os.chdir(output_directory)                                                              # Direct DF to output dir
+    output_name = "{}_deviceInfo.csv".format(output_name)                                   # Format file name
+    clean.to_csv(output_name, index=False)                                                  # Push CSV to directory
