@@ -1,6 +1,7 @@
 # WellPing-EMA-Parser
 Converts Stanford Communities Project EMA data from JSON to CSV
 
+* devices.py: Scrapes individual device data from EMA JSON file
 * parser.py: Custom functions to flatten and clean individual JSON responses
 * ripper.py: Wraps functions from **parser.py**
 
