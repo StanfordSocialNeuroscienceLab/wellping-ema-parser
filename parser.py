@@ -42,7 +42,6 @@ def preferNotToAnswer(DF):
     """
     Replaces data values with "PNA" when applicable
     """
-
     for ix, val in enumerate(DF['preferNotToAnswer']):
         if str(val) != "None":
             DF["data"][ix] = "PNA"
@@ -225,7 +224,6 @@ def addUsername(DF, IX):
     DF = DF[cleanColumns]
     return DF
 
-
 # ------------------ WRAPPER
 def setup(here):
     for repo in ["89_Participant-Files", "99_Composite-CSV"]:
@@ -289,8 +287,12 @@ def parseReponses(DATA, IX, LOG):
         preferNotToAnswer(clean)
         flat_answers = flattenAnswers(clean)
 
+        # ------- Devices
+        devices = pd.DataFrame(DATA[list(DATA.keys())[index]]['user']['installation']['device'], index=[0])
+
         # ------ Kick-out
         output_combo = pings.join(flat_answers, on="id")
+        output_combo = output_combo.join(devices, how="left")
         big_kahuna = big_kahuna.append(output_combo, ignore_index=True, sort=False)
 
     try:
