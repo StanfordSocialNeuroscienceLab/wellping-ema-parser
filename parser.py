@@ -75,7 +75,7 @@ def splitStressResponses(DF):
                 real_vals.append(item[0].strip("["))                        # Add to empty list
 
         try:
-            DF.loc[idx, 'stressResponse'] = real_vals                       # Replace column w/ clean values
+            DF.loc[idx, 'stressResponse'] = str(real_vals)                  # Replace column w/ clean values
         except:
             DF.loc[idx, 'stressResponse'] = "NA"
 
@@ -176,7 +176,7 @@ def defineInteractions(DF, LOG):
                     real_vals.append(item[0].strip("["))
 
             try:
-                DF.loc[idx, var] = real_vals
+                DF.loc[idx, var] = str(real_vals)
             except:
                 DF.loc[idx, var] = "NA"
 
@@ -201,7 +201,7 @@ def splitRace(DF):
                 real_vals.append(item[0].strip("["))                            # Add to list
 
         try:
-            DF.loc[idx, 'Race'] = real_vals                                     # Replace Race column with True vals
+            DF.loc[idx, 'Race'] = str(real_vals)                                # Replace Race column with True vals
         except:
             DF.loc[idx, 'Race'] = "NA"
 
