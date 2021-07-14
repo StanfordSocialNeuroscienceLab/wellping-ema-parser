@@ -29,9 +29,7 @@ def cleanAnswers(DF):
             DF.loc[ix, "data"] = val
 
         if DF['preferNotToAnswer'][ix] == "True":
-            DF.loc[ix, "data"] = "PNA"                                  # Fill PNA values appropriately
-        else:
-            continue
+            DF['data'][ix] = "PNA"                                      # Fill PNA values appropriately
 
     DF['data'] = DF['data'].map(lambda x: str(x)[13:-2])                # Strip dictionary brackets
     return DF
@@ -42,7 +40,7 @@ def preferNotToAnswer(DF):
     Replaces data values with "PNA" when applicable
     """
     for ix, val in enumerate(DF['preferNotToAnswer']):                  # Another PNA iteration...
-        if str(val) != "None":                                          # In case the cleanAnswers() v doesn't work lol
+        if str(val) == "True":                                          # In case the cleanAnswers() v doesn't work lol
             DF["data"][ix] = "PNA"
 
 
@@ -51,6 +49,8 @@ def flattenAnswers(DF):
     Converts DF from long to wide format
     """
 
+    # Unique timestamps ONLY - this skips over data duplication issue (date 7/9/2021)
+    DF = DF.drop_duplicates(subset="date", keep="first").reset_index(drop=True)
     DF["IX"] = DF.groupby("questionId", as_index=False).cumcount()
     return DF.pivot(index="pingId", columns="questionId", values="data")
 
@@ -75,7 +75,7 @@ def splitStressResponses(DF):
                 real_vals.append(item[0].strip("["))                        # Add to empty list
 
         try:
-            DF.loc[idx, 'stressResponse'] = str(real_vals)                  # Replace column w/ clean values
+            DF.loc[idx, 'stressResponse'] = str(real_vals).strip()          # Replace column w/ clean values
         except:
             DF.loc[idx, 'stressResponse'] = "NA"
 
@@ -236,13 +236,9 @@ def setup(here):
     """
 
     for repo in ["89_Participant-Files", "99_Composite-CSV"]:
-        try:
-            os.chdir(repo)
-            os.chdir(here)
-        except:
+        if not os.path.exists(os.path.join(here,repo)):
             print("Creating {} directory...".format(repo))
-            os.mkdir(repo)
-            os.chdir(here)
+            os.mkdir(os.path.join(here, repo))
             sleep(1)
 
 
@@ -297,13 +293,15 @@ def parseReponses(DATA, IX, LOG):
 
         # ------- Pings
         pings = pd.DataFrame(DATA[list(DATA.keys())[index]]["pings"])
+        pings = pings.drop_duplicates(subset="startTime", keep="first").reset_index(drop=True)
         addUsername(pings, IX)
 
         # ------- Answers
         answers = pd.DataFrame(DATA[list(DATA.keys())[index]]['answers'])
         clean = cleanAnswers(answers)
-        clean['data'] = clean['data'].apply(lambda x: x.strip("'"))
         preferNotToAnswer(clean)
+        clean['data'] = clean['data'].apply(lambda x: x.strip("'"))
+
         flat_answers = flattenAnswers(clean)
 
         # ------- Devices
