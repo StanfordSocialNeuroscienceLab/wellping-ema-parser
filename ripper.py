@@ -1,4 +1,4 @@
-#! /usr/bin/env python3.6
+#!/bin/python3
 # -*- coding: utf-8 -*-
 
 """
@@ -12,20 +12,25 @@ This program will do the rest!
 # ---------- IMPORTS
 import json
 import sys
+import os
 import pandas as pd
 from parser import *                                                    # Cowboy Emoji
 from devices import *
 
 # --------- FILE SYSTEM HIERARCHY
-here = os.getcwd()                                                      # Define local file path
-there = here + "/" + sys.argv[1] + "/"
-os.chdir(there)
+there = os.path.join("{}/{}/".format(os.getcwd(), sys.argv[1]))         # Output directory
+
+if not os.path.isdir(there):
+    print("\n{} is invalid path...".format(there))                      # Confirm path is correct
+    sys.exit(1)
+
 setup(there)                                                            # Build these directories if they don't exist
-participantDirectory = here + "/89_Participant-Files/"                  # Define landing directory for individual CSVs
-compositeDirectory = here + "/99_Composite-CSV/"                        # Define landing directory for final output
+participantDirectory = os.path.join(there, "89_Participant-Files")      # Define landing directory for individual CSVs
+compositeDirectory = os.path.join(there, "/99_Composite-CSV/")          # Define landing directory for final output
 
 
 # --------- READ IN JSON
+os.chdir(there)
 temp_name=grabJSON(there)
 
 with open(temp_name, "r") as incoming:
@@ -37,14 +42,20 @@ with open(temp_name, "r") as incoming:
 output_name=temp_name[:-5]
 log = open("{}.txt".format(output_name), "w")
 keys_outer = list(data.keys())                                          # Isolate participant user names
+parent_errors = []
 
-print("Parsing EMA responses....")
+print("\nParsing EMA responses....")
 for ix in tqdm(range(len(keys_outer))):                                 # Loop through user names and parse data
     temp = data[keys_outer[ix]]                                         # See wrapper for helper function implementation
     username = keys_outer[ix]
-    parseReponses(temp, username, log)
 
-print("All participants' data parsed...")
+    try:
+        parseReponses(temp, username, log)
+    except Exception as e:
+        parent_errors.append(username)
+        continue
+
+print("\nAll participants' data parsed...")
 log.close()
 sleep(1)
 print("\nCombining all files...")
@@ -65,5 +76,13 @@ for ix in tqdm(range(len(keys_outer))):
 pushDevices(devices,                                                    # Push devices CSV to output directory
             output_directory=(there + "/99_Composite-CSV/"),
             output_name=output_name)
+
+try:
+    with open("parent_errors.json", "w") as outgoing:
+        print("\nSaving JSON file containing existential errors...")
+        temp = {sub: data[sub] for sub in parent_errors}
+        json.dump(temp, outgoing, indent=4)
+except:
+    print("You're here:\t\t{}".format(os.getcwd()))
 
 print("\nAll files combined!")
