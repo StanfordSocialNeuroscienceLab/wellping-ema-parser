@@ -1,32 +1,43 @@
+<img src=".images/SSNL.jpg" width=500px>
+
+<br> 
+
 # WellPing-EMA-Parser
 Converts Stanford Communities Project EMA data from JSON to CSV
 
-* devices.py: Scrapes individual device data from EMA JSON file
-* parser.py: Custom functions to flatten and clean individual JSON responses
-* ripper.py: Wraps functions from **parser.py**
+Included scripts
 
+* `ripper.py`: **Run this script**, everything else is wrapped
+  
+* `devices.py`: Scrapes individual device data from EMA JSON file
+  
+* `parser.py`: Custom functions to flatten and clean individual JSON responses
 
-At the command line: **python3.6 ripper.py { TARGET DIRECTORY }**
+<br>
 
-------------------------------
+At the command line: `python3 ripper.py [ TARGET DIRECTORY ]`
 
-Before
+<br>
 
-- ROOT DIRECTORY
-  - parser.py
-  - ripper.py
-  - TARGET DIRECTORY
-    - { EMA-file.json }
+## User Notes
 
+### Before running the script:
 
-After
+Your target directory should have one JSON file with all participants' EMA data
 
-- ROOT DIRECTORY
-  - parser.py
-  - ripper.py
-  - TARGET DIRECTORY
-    - 89_Participant-Files
-      - { Individual CSVs for each participant }
-    - 99_Composite-CSV
-      - { EMA-file.csv }
-    - { EMA-file.json }
+<img src=".images/tree-before.png">
+
+<br> <br>
+
+### After running the script:
+
+Your target directory will contain:
+
+* Subject-wise CSV files of pings and answers (not shown in the screenshot below)
+* Composite CSV of all subjects
+* A JSON file containing participant data with existenatial errors (to be parsed separately)
+* An error log of parsing issues that did **not** prevent subjects from inclusion in the CSV
+
+<br>
+
+<img src=".images/tree-after.png">
