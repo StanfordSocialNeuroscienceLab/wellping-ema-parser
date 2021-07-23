@@ -98,17 +98,17 @@ def splitNominations(DF):
 
         # Not efficient but it works...
         try:
-            DF.loc[ix, "SU_Nom_1"] = temp[0].strip("[").title()             # Push clean responses to correct columns
+            DF.loc[ix, "SU_Nom_1"] = temp[0].strip("[").title().strip()     # Push clean responses to correct columns
         except:
             continue
 
         try:
-            DF.loc[ix, "SU_Nom_2"] = temp[1].title()
+            DF.loc[ix, "SU_Nom_2"] = temp[1].title().strip()
         except:
             continue
 
         try:
-            DF.loc[ix, "SU_Nom_3"] = temp[2].strip("]").title()
+            DF.loc[ix, "SU_Nom_3"] = temp[2].strip("]").title().strip()
         except:
             continue
 
