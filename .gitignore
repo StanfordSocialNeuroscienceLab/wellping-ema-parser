@@ -5,4 +5,6 @@ __pycache__/devices.cpython-37.pyc
 __pycache__/devices.cpython-39.pyc
 __pycache__/parser.cpython-37.pyc
 __pycache__/parser.cpython-39.pyc
-Compare-Contrast.ipynb
+*.ipynb
+dev/*
+nesting.py
