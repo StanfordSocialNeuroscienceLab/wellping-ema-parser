@@ -106,39 +106,53 @@ def split_nominations(DF):
 
 
 def split_NSU(DF):
-    """
-    If applicable, splits SU_Nom column into three distinct columns
-    """
-
+    # Default to NA values
     for k in [1,2,3]:
-        temp = f"NSU_Rel_{k}"                                           #
-        DF[temp] = "NA"                                                 #
+        var_nom = f"SU_Nom_{k}"
+        var_no_nom = f"SU_No_Nom_{k}"
 
+        for m in [var_nom, var_no_nom]:
+            DF[m] = "NA"
 
-    # See .splitNominations() ... same philosophy here
-    for index, response in enumerate(DF.loc[:, "NSU_Rel"]):
+    for ix, response in enumerate(DF.loc[:, "SU_Nom"]):
         try:
-            temp = response.split(",")                                  #
+            temp = response.split(",")
         except:
             temp = response
 
         for k in [0,1,2]:
-            var_name = f"NSU_Rel_{k+1}"                                 #
+            var = f"SU_Nom_{k+1}"
 
-            try:                                                        #
+            try:
                 if k == 0:
-                    keep = temp[k].strip("[").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
                 elif k == 2:
-                    keep = temp[k].strip("]").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
                 else:
-                    keep = temp[k].title().strip()
-
+                    DF.loc[ix, var] = temp[k].title().strip()
             except:
                 continue
 
-            DF.loc[index, var_name] = keep                              #
+    for ix, response in enumerate(DF.loc[:, "SU_Nom_None_Nom"]):
+        try:
+            temp = response.split(",")
+        except:
+            temp = response
 
+        for k in [0,1,2]:
+            var = f"SU_No_Nom_{k+1}"
 
+            try:
+                if k == 0:
+                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
+                elif k == 2:
+                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
+                else:
+                    DF.loc[ix, var] = temp[k].title().strip()
+            except:
+                continue
+
+                
 def define_interactions(DF, LOG):
     """
     Loops through "interaction" variables and finds "True" values
@@ -324,7 +338,7 @@ def parse_responses(DATA, IX, LOG):
         split_race(big_kahuna)
     except Exception as e:
         LOG.write("No race values provided for {}...{}\n".format(IX, type(e)))
-
+        
     cleanup(big_kahuna)
     big_kahuna.to_csv(os.path.join(output_path, filename), index=False)
 

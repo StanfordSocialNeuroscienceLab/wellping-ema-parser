@@ -1,10 +1,7 @@
 
 .DS_Store
 .ipynb_checkpoints/Compare-Contrast-checkpoint.ipynb
-__pycache__/devices.cpython-37.pyc
-__pycache__/devices.cpython-39.pyc
-__pycache__/parser.cpython-37.pyc
-__pycache__/parser.cpython-39.pyc
+__pycache__/*.pyc
 *.ipynb
 dev/*
 nesting.py
