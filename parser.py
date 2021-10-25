@@ -1,5 +1,4 @@
-#! /usr/bin/env python3.6
-# -*- coding: utf-8 -*-
+#!/bin/python3
 
 """
 Hacked together by I. Richard Ferguson
@@ -86,31 +85,50 @@ def splitNominations(DF):
     """
 
     # Default to NA values
-    DF["SU_Nom_1"] = "NA"
-    DF["SU_Nom_2"] = "NA"
-    DF["SU_Nom_3"] = "NA"
+    for k in [1,2,3]:
+        var_nom = f"SU_Nom_{k}"
+        var_no_nom = f"SU_No_Nom_{k}"
+
+        for m in [var_nom, var_no_nom]:
+            DF[m] = "NA"
 
     for ix, response in enumerate(DF.loc[:, "SU_Nom"]):
         try:
-            temp = response.split(",")                                      # Split nominations into list on ','
+            temp = response.split(",")
         except:
             temp = response
 
-        # Not efficient but it works...
-        try:
-            DF.loc[ix, "SU_Nom_1"] = temp[0].strip("[").title().strip()     # Push clean responses to correct columns
-        except:
-            continue
+        for k in [0,1,2]:
+            var = f"SU_Nom_{k+1}"
 
-        try:
-            DF.loc[ix, "SU_Nom_2"] = temp[1].title().strip()
-        except:
-            continue
+            try:
+                if k == 0:
+                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
+                elif k == 2:
+                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
+                else:
+                    DF.loc[ix, var] = temp[k].title().strip()
+            except:
+                continue
 
+    for ix, response in enumerate(DF.loc[:, "SU_Nom_None_Nom"]):
         try:
-            DF.loc[ix, "SU_Nom_3"] = temp[2].strip("]").title().strip()
+            temp = response.split(",")
         except:
-            continue
+            temp = response
+
+        for k in [0,1,2]:
+            var = f"SU_No_Nom_{k+1}"
+
+            try:
+                if k == 0:
+                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
+                elif k == 2:
+                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
+                else:
+                    DF.loc[ix, var] = temp[k].title().strip()
+            except:
+                continue
 
 
 def splitNSU(DF):
@@ -331,11 +349,6 @@ def parseReponses(DATA, IX, LOG):
         splitRace(big_kahuna)
     except Exception as e:
         LOG.write("No race values provided for {}...{}\n".format(IX, type(e)))
-    try:
-        splitStressResponses(big_kahuna)
-    except Exception as e:
-        LOG.write("Cannot split stress responses for {}...{}\n".format(IX, type(e)))
-
     cleanup(big_kahuna)
     big_kahuna.to_csv(os.path.join(output_path, filename), index=False)
 
