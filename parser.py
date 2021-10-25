@@ -1,20 +1,28 @@
-#! /usr/bin/env python3.6
-# -*- coding: utf-8 -*-
+#!/bin/python3
 
 """
-Hacked together by I. Richard Ferguson
-10.02.20 | San Francisco, CA
+WellPing EMA Parser - Parsing Script
+
+About this script
+    * Individual EMA response files are fed into this program
+    * Data is pivoted from long (JSON) to wide (DataFrame)
+    * Values are cleaned (e.g., converted to string/int values)
+    * Multiple-choice answers are parsed and saved as lists
+
+An individual participant's CSV to saved to the output directory
+Ian Richard Ferguson | Stanford University
 """
 
-# ------------------- IMPORTS
+
+# ---- Imports
 import os
 from time import sleep
 import pandas as pd
 from tqdm import tqdm
 
-# ------------------ HELPER FUNCTIONS: ANSWERS
 
-def cleanAnswers(DF):
+# ---- Answers
+def clean_answers(DF):
     """
     For answers data in long format
     """
@@ -32,10 +40,11 @@ def cleanAnswers(DF):
             DF['data'][ix] = "PNA"                                      # Fill PNA values appropriately
 
     DF['data'] = DF['data'].map(lambda x: str(x)[13:-2])                # Strip dictionary brackets
+
     return DF
 
 
-def preferNotToAnswer(DF):
+def PNA(DF):
     """
     Replaces data values with "PNA" when applicable
     """
@@ -44,7 +53,7 @@ def preferNotToAnswer(DF):
             DF["data"][ix] = "PNA"
 
 
-def flattenAnswers(DF):
+def flatten_answers(DF):
     """
     Converts DF from long to wide format
     """
@@ -52,101 +61,85 @@ def flattenAnswers(DF):
     # Unique timestamps ONLY - this skips over data duplication issue (date 7/9/2021)
     DF = DF.drop_duplicates(subset="date", keep="first").reset_index(drop=True)
     DF["IX"] = DF.groupby("questionId", as_index=False).cumcount()
+
     return DF.pivot(index="pingId", columns="questionId", values="data")
 
 
-def splitStressResponses(DF):
-    """
-    Loops through possible stress response answers
-    Replaces DF value with response marked "True"
-    """
-
-    for idx, response in enumerate(DF['stressResponse']):
-        real_vals = []
-
-        try:
-            clean = response.strip("[").strip("]").split("]")               # Strip outside brackets
-        except:
-            continue
-
-        for item in clean:
-            if "True" in item:
-                item = item.strip(",").strip("[").split(",")                # Strip inside brackets
-                real_vals.append(item[0].strip("["))                        # Add to empty list
-
-        try:
-            DF.loc[idx, 'stressResponse'] = str(real_vals).strip()          # Replace column w/ clean values
-        except:
-            DF.loc[idx, 'stressResponse'] = "NA"
-
-
-def splitNominations(DF):
+def split_nominations(DF):
     """
     If applicable, splits SU_Nom column into three distinct columns
     """
 
-    # Default to NA values
-    DF["SU_Nom_1"] = "NA"
-    DF["SU_Nom_2"] = "NA"
-    DF["SU_Nom_3"] = "NA"
+    #
+    new_vars = {"SU_Nom": "SU_Nom_{}",
+                "SU_Nom_None_Nom": "SU_No_Nom_{}"}
 
-    for ix, response in enumerate(DF.loc[:, "SU_Nom"]):
-        try:
-            temp = response.split(",")                                      # Split nominations into list on ','
-        except:
-            temp = response
+    #
+    for var in list(new_vars.keys()):
+        for k in [1,2,3]:
+            new_var = new_vars[var].format(k)                           #
+            DF[new_var] = "NA"                                          #
 
-        # Not efficient but it works...
-        try:
-            DF.loc[ix, "SU_Nom_1"] = temp[0].strip("[").title().strip()     # Push clean responses to correct columns
-        except:
-            continue
+    #
+    for variable in list(new_vars.keys()):
+        for index, response in enumerate(DF.loc[:, variable]):
+            try:
+                temp = response.split(",")                              #
+            except:
+                temp = response
 
-        try:
-            DF.loc[ix, "SU_Nom_2"] = temp[1].title().strip()
-        except:
-            continue
+            for k in [0,1,2]:
+                var_name = new_vars[variable].format(k+1)               #
 
-        try:
-            DF.loc[ix, "SU_Nom_3"] = temp[2].strip("]").title().strip()
-        except:
-            continue
+                try:                                                    #
+                    if k == 0:
+                        keep = temp[k].strip("[").title().strip()
+                    elif k == 2:
+                        keep = temp[k].strip("]").title().strip()
+                    else:
+                        keep = temp[k].title().strip()
+
+                    DF.loc[index, var_name] = keep
+
+                except:
+                    continue
 
 
-def splitNSU(DF):
+def split_NSU(DF):
     """
     If applicable, splits SU_Nom column into three distinct columns
     """
 
-    # Default to NA
-    DF["NSU_Rel_1"] = "NA"
-    DF["NSU_Rel_2"] = "NA"
-    DF["NSU_Rel_3"] = "NA"
+    for k in [1,2,3]:
+        temp = f"NSU_Rel_{k}"                                           #
+        DF[temp] = "NA"                                                 #
+
 
     # See .splitNominations() ... same philosophy here
-    for ix, response in enumerate(DF.loc[:, "NSU_Rel"]):
+    for index, response in enumerate(DF.loc[:, "NSU_Rel"]):
         try:
-            temp = response.split(",")
+            temp = response.split(",")                                  #
         except:
             temp = response
 
-        try:
-            DF.loc[ix, "NSU_Rel_1"] = temp[0].strip("[").title()
-        except:
-            continue
+        for k in [0,1,2]:
+            var_name = f"NSU_Rel_{k+1}"                                 #
 
-        try:
-            DF.loc[ix, "NSU_Rel_2"] = temp[1].title()
-        except:
-            continue
+            try:                                                        #
+                if k == 0:
+                    keep = temp[k].strip("[").title().strip()
+                elif k == 2:
+                    keep = temp[k].strip("]").title().strip()
+                else:
+                    keep = temp[k].title().strip()
 
-        try:
-            DF.loc[ix, "NSU_Rel_3"] = temp[2].strip("]").title()
-        except:
-            continue
+            except:
+                continue
+
+            DF.loc[index, var_name] = keep                              #
 
 
-def defineInteractions(DF, LOG):
+def define_interactions(DF, LOG):
     """
     Loops through "interaction" variables and finds "True" values
     Replaces values in DF with values marked "True" by participants
@@ -181,7 +174,7 @@ def defineInteractions(DF, LOG):
                 DF.loc[idx, var] = "NA"
 
 
-def splitRace(DF):
+def split_race(DF):
     """
     Loops through possible race answers
     Replaces DF value with race marked "True"
@@ -216,9 +209,8 @@ def cleanup(DF):
             DF[var] = DF[var].map(lambda x: str(x).replace(char, ""))
 
 
-# ------------------ HELPER FUNCTIONS: PINGS
-
-def addUsername(DF, IX):
+# ---- Pings
+def add_username(DF, IX):
     """
     Adds username column + reorders columns appropriately
     """
@@ -228,7 +220,8 @@ def addUsername(DF, IX):
     DF = DF[cleanColumns]
     return DF
 
-# ------------------ WRAPPER
+
+# ---- Wrapper
 def setup(here):
     """
     Check to see if output directories exist
@@ -242,7 +235,7 @@ def setup(here):
             sleep(1)
 
 
-def grabJSON(DIR):
+def iso_JSON(DIR):
     """
     Finds JSON file in the target directory and isolates it
     """
@@ -273,7 +266,7 @@ def output(filename="Composite-Responses"):
     os.chdir("../..")
 
 
-def parseReponses(DATA, IX, LOG):
+def parse_responses(DATA, IX, LOG):
     """
     Wraps all of the above into a neat little function
     Warning: May work TOO well (just kidding)
@@ -294,15 +287,15 @@ def parseReponses(DATA, IX, LOG):
         # ------- Pings
         pings = pd.DataFrame(DATA[list(DATA.keys())[index]]["pings"])
         pings = pings.drop_duplicates(subset="startTime", keep="first").reset_index(drop=True)
-        addUsername(pings, IX)
+        add_username(pings, IX)
 
         # ------- Answers
         answers = pd.DataFrame(DATA[list(DATA.keys())[index]]['answers'])
-        clean = cleanAnswers(answers)
-        preferNotToAnswer(clean)
+        clean = clean_answers(answers)
+        PNA(clean)
         clean['data'] = clean['data'].apply(lambda x: x.strip("'"))
 
-        flat_answers = flattenAnswers(clean)
+        flat_answers = flatten_answers(clean)
 
         # ------- Devices
         devices = pd.DataFrame(DATA[list(DATA.keys())[index]]['user']['installation']['device'], index=[0])
@@ -320,21 +313,17 @@ def parseReponses(DATA, IX, LOG):
         big_kahuna = big_kahuna.append(output_combo, ignore_index=True, sort=False)
 
     try:
-        splitNominations(big_kahuna)
+        split_nominations(big_kahuna)
     except Exception as e:
         LOG.write("Known {} for splitting nominations @ {}\n".format(type(e), IX))
     try:
-        splitNSU(big_kahuna)
+        split_NSU(big_kahuna)
     except Exception as e:
         LOG.write("Cannot split NSU values for {}...{}\n".format(IX, type(e)))
     try:
-        splitRace(big_kahuna)
+        split_race(big_kahuna)
     except Exception as e:
         LOG.write("No race values provided for {}...{}\n".format(IX, type(e)))
-    try:
-        splitStressResponses(big_kahuna)
-    except Exception as e:
-        LOG.write("Cannot split stress responses for {}...{}\n".format(IX, type(e)))
 
     cleanup(big_kahuna)
     big_kahuna.to_csv(os.path.join(output_path, filename), index=False)
