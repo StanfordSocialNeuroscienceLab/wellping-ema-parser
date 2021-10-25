@@ -1,19 +1,22 @@
-#! /usr/bin/env python3.6
-# -*- coding: utf-8 -*-
+#!/bin/python3
 
 """
-Hacked together by I. Richard Ferguson
-11.09.20 | San Francisco, CA
+WellPing EMA Parser - Device ID Script
 
-Helper functions for ripper.py EMA parser
-Produces CSV output of user device / software information
+About this script
+    * This script isolates participants' cell phone information
+    * Subsetted DataFrame is merged with participant responses in the wrapper script
+
+Ian Richard Ferguson | Stanford University
 """
 
+# ---- Imports
 import pandas as pd
 import os
 
 
-def parseDevices(inData, user):
+# ---- Functions
+def parse_devices(inData, user):
     """"
     Loops through participant response dictionaries
     Isolates user device data (e.g., Apple iPhone XR, iOS version xx.xx)
@@ -37,7 +40,7 @@ def parseDevices(inData, user):
     return temp
 
 
-def deviceCleanup(DF):
+def device_cleanup(DF):
     """
     Fills null values and reorganizes device DF
     """
@@ -55,15 +58,16 @@ def deviceCleanup(DF):
     extra_vars.sort()
     columns.extend(extra_vars)                                                              # List of all vars
     DF = DF[columns]                                                                        # Reorder DF columns
+    
     return DF
 
 
-def pushDevices(DF, output_directory, output_name):
+def push_devices(DF, output_directory, output_name):
     """
     Pushes cleaned device DF to output directory
     """
 
-    clean = deviceCleanup(DF)                                                               # Clean device DF w/ helper
+    clean = device_cleanup(DF)                                                              # Clean device DF w/ helper
     os.chdir(output_directory)                                                              # Direct DF to output dir
-    output_name = "{}_deviceInfo.csv".format(output_name)                                   # Format file name
+    output_name = "{}_device_info.csv".format(output_name)                                  # Format file name
     clean.to_csv(output_name, index=False)                                                  # Push CSV to directory
