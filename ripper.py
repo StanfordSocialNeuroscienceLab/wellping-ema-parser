@@ -1,18 +1,18 @@
 #!/bin/python3
-# -*- coding: utf-8 -*-
 
 """
-Hacked together by I. Richard Ferguson
-10.02.20 | San Francisco, CA
+WellPing EMA Parser - Wrapper Script
 
-User Notes: At the command line run "python3.6 ripper.py {TARGET DIRECTORY}"
-This program will do the rest!
+About this script
+    * Run `python3 ripper.py { target_directory }`
+    * This script will create individual CSVs for each subject in the 89 directory
+    * An aggregated CSV is saved in the 99 directory
+
+Ian Richard Ferguson | Stanford University
 """
 
 # ---------- IMPORTS
-import json
-import sys
-import os
+import json, sys, os
 import pandas as pd
 from parser import *                                                    # Cowboy Emoji
 from devices import *
@@ -26,12 +26,12 @@ if not os.path.isdir(there):
 
 setup(there)                                                            # Build these directories if they don't exist
 participantDirectory = os.path.join(there, "89_Participant-Files")      # Define landing directory for individual CSVs
-compositeDirectory = os.path.join(there, "/99_Composite-CSV/")          # Define landing directory for final output
+compositeDirectory = os.path.join(there, "99_Composite-CSV")            # Define landing directory for final output
 
 
 # --------- READ IN JSON
 os.chdir(there)
-temp_name=grabJSON(there)
+temp_name=iso_JSON(there)
 
 with open(temp_name, "r") as incoming:
     data=json.load(incoming)
@@ -40,27 +40,28 @@ with open(temp_name, "r") as incoming:
 
 # -------- LOOP THROUGH PARSER FUNCTION
 output_name=temp_name[:-5]
-log = open("{}.txt".format(output_name), "w")
-keys_outer = list(data.keys())                                          # Isolate participant user names
-parent_errors = []
 
-print("\nParsing EMA responses....")
-for ix in tqdm(range(len(keys_outer))):                                 # Loop through user names and parse data
-    temp = data[keys_outer[ix]]                                         # See wrapper for helper function implementation
-    username = keys_outer[ix]
+with open(f"{output_name}.txt", "w"):
+    keys_outer = list(data.keys())                                      # Isolate participant user names
+    parent_errors = []
 
-    try:
-        parseReponses(temp, username, log)
-    except Exception as e:
-        parent_errors.append(username)
-        continue
+    print("\nParsing EMA responses....")
+    for ix in tqdm(range(len(keys_outer))):                             # Loop through user names and parse data
+        temp = data[keys_outer[ix]]                                     # See wrapper for helper function implementation
+        username = keys_outer[ix]
 
-print("\nAll participants' data parsed...")
-log.close()
+        try:
+            parse_responses(temp, username, log)
+        except Exception as e:
+            parent_errors.append(username)
+            continue
+
+    print("\nAll participants' data parsed...")
+
 sleep(1)
 print("\nCombining all files...")
-sleep(1)
 
+sleep(1)
 output(output_name)                                                     # Push clean CSV to output directory
 
 # -------- LOOP THROUGH DEVICE ID FUNCTION
@@ -70,10 +71,10 @@ print('\nScraping device information...')
 for ix in tqdm(range(len(keys_outer))):
     temp = data[keys_outer[ix]]
     username = keys_outer[ix]
-    devices = devices.append(parseDevices(temp, username),              # Parse participant device info + append to DF
+    devices = devices.append(parse_devices(temp, username),              # Parse participant device info + append to DF
                              ignore_index=True, sort=False)
 
-pushDevices(devices,                                                    # Push devices CSV to output directory
+push_devices(devices,                                                    # Push devices CSV to output directory
             output_directory=(there + "/99_Composite-CSV/"),
             output_name=output_name)
 
