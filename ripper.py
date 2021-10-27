@@ -41,7 +41,7 @@ with open(temp_name, "r") as incoming:
 # -------- LOOP THROUGH PARSER FUNCTION
 output_name=temp_name[:-5]
 
-with open(f"{output_name}.txt", "w"):
+with open(f"{output_name}.txt", "w") as log:
     keys_outer = list(data.keys())                                      # Isolate participant user names
     parent_errors = []
 
@@ -53,7 +53,8 @@ with open(f"{output_name}.txt", "w"):
         try:
             parse_responses(temp, username, log)
         except Exception as e:
-            parent_errors.append(username)
+            print(e)
+            # parent_errors.append(username)
             continue
 
     print("\nAll participants' data parsed...")
