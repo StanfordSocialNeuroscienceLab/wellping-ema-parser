@@ -27,19 +27,19 @@ def clean_answers(DF):
     For answers data in long format
     """
 
-    DF['preferNotToAnswer'] = DF['preferNotToAnswer'].astype(str)       # Convert PNA column to string
+    DF['preferNotToAnswer'] = DF['preferNotToAnswer'].astype(str)               # Convert PNA column to string
 
     for ix, val in enumerate(DF["data"]):
         try:
-            temp = val.values()                                         # Isolate participant responses, if not NA
+            temp = val.values()                                                 # Isolate participant responses, if not NA
             DF.loc[ix, "data"] = str(temp)
         except:
             DF.loc[ix, "data"] = val
 
         if DF['preferNotToAnswer'][ix] == "True":
-            DF['data'][ix] = "PNA"                                      # Fill PNA values appropriately
+            DF['data'][ix] = "PNA"                                              # Fill PNA values appropriately
 
-    DF['data'] = DF['data'].map(lambda x: str(x)[13:-2])                # Strip dictionary brackets
+    DF['data'] = DF['data'].map(lambda x: str(x)[13:-2])                        # Strip dictionary brackets
 
     return DF
 
@@ -48,8 +48,8 @@ def PNA(DF):
     """
     Replaces data values with "PNA" when applicable
     """
-    for ix, val in enumerate(DF['preferNotToAnswer']):                  # Another PNA iteration...
-        if str(val) == "True":                                          # In case the cleanAnswers() v doesn't work lol
+    for ix, val in enumerate(DF['preferNotToAnswer']):                          # Another PNA iteration...
+        if str(val) == "True":                                                  # In case the cleanAnswers() v doesn't work lol
             DF["data"][ix] = "PNA"
 
 
@@ -70,28 +70,28 @@ def split_nominations(DF):
     If applicable, splits SU_Nom column into three distinct columns
     """
 
-    #
+    # Variable names ready to be formatted
     new_vars = {"SU_Nom": "SU_Nom_{}",
                 "SU_Nom_None_Nom": "SU_No_Nom_{}"}
 
-    #
+    # Loop through new variables and default to NA
     for var in list(new_vars.keys()):
         for k in [1,2,3]:
-            new_var = new_vars[var].format(k)                           #
-            DF[new_var] = "NA"                                          #
+            new_var = new_vars[var].format(k)                                   # E.g., SU_Nom_1
+            DF[new_var] = "NA"                                                  # Fill with NA values
 
-    #
+    # Split responses where applicable
     for variable in list(new_vars.keys()):
         for index, response in enumerate(DF.loc[:, variable]):
             try:
-                temp = response.split(",")                              #
+                temp = response.split(",")                                      # Vectorize subject responses
             except:
                 temp = response
 
             for k in [0,1,2]:
-                var_name = new_vars[variable].format(k+1)               #
+                var_name = new_vars[variable].format(k+1)                       # 0 becomes 1, 1 becomes 2, etc
 
-                try:                                                    #
+                try:                                                            # Strip the brackets off of new strings
                     if k == 0:
                         keep = temp[k].strip("[").title().strip()
                     elif k == 2:
@@ -167,7 +167,7 @@ def define_interactions(DF, LOG):
             temp = DF.loc[:, "questionId" == var]
         except Exception as e:
             temp = DF
-            LOG.write("{} at {}...\n".format(type(e), var))  # KeyError
+            LOG.write("{} at {}...\n".format(type(e), var))                     # KeyError
 
         for idx, response in enumerate(temp):
             real_vals = []
@@ -290,9 +290,9 @@ def parse_responses(DATA, IX, LOG):
     LOG <- Text file to keep track of errors
     """
 
-    filename = "{}.csv".format(IX)                      # Format filename to be exported
-    output_path = "89_Participant-Files/"               # Landing directory for output CSVs
-    big_kahuna = pd.DataFrame()                         # Empty DF to append into
+    filename = "{}.csv".format(IX)                                              # Format filename to be exported
+    output_path = "89_Participant-Files/"                                       # Landing directory for output CSVs
+    big_kahuna = pd.DataFrame()                                                 # Empty DF to append into
 
     for index in range(len(DATA.keys())):
 
