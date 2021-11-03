@@ -53,8 +53,8 @@ with open(f"{output_name}.txt", "w") as log:
         try:
             parse_responses(temp, username, log)
         except Exception as e:
-            print(e)
-            # parent_errors.append(username)
+            #print(e)
+            parent_errors.append(username)
             continue
 
     print("\nAll participants' data parsed...")
