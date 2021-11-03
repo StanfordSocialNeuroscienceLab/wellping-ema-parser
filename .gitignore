@@ -1,7 +1,5 @@
 
 .DS_Store
-.ipynb_checkpoints/Compare-Contrast-checkpoint.ipynb
 __pycache__/*.pyc
+*.csv
 *.ipynb
-dev/*
-nesting.py
