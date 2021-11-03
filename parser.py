@@ -72,7 +72,9 @@ def split_nominations(DF):
 
     # Variable names ready to be formatted
     new_vars = {"SU_Nom": "SU_Nom_{}",
-                "SU_Nom_None_Nom": "SU_No_Nom_{}"}
+                "SU_Nom_None_Nom": "SU_No_Nom_{}",
+                "NSU_Rel": "NSU{}_Rel",
+                "NSU_Nom_None_Nom":"NSU{}_None_Rel"}
 
     # Loop through new variables and default to NA
     for var in list(new_vars.keys()):
