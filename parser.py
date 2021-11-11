@@ -95,11 +95,11 @@ def split_nominations(DF):
 
                 try:                                                            # Strip the brackets off of new strings
                     if k == 0:
-                        keep = temp[k].strip("[").title().strip()
+                        keep = temp[k].strip("[").strip()
                     elif k == 2:
-                        keep = temp[k].strip("]").title().strip()
+                        keep = temp[k].strip("]").strip()
                     else:
-                        keep = temp[k].title().strip()
+                        keep = temp[k].strip()
 
                     DF.loc[index, var_name] = keep
 
@@ -127,11 +127,11 @@ def split_NSU(DF):
 
             try:
                 if k == 0:
-                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("[").strip()
                 elif k == 2:
-                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("]").strip()
                 else:
-                    DF.loc[ix, var] = temp[k].title().strip()
+                    DF.loc[ix, var] = temp[k].strip()
             except:
                 continue
 
@@ -146,11 +146,11 @@ def split_NSU(DF):
 
             try:
                 if k == 0:
-                    DF.loc[ix, var] = temp[k].strip("[").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("[").strip()
                 elif k == 2:
-                    DF.loc[ix, var] = temp[k].strip("]").title().strip()
+                    DF.loc[ix, var] = temp[k].strip("]").strip()
                 else:
-                    DF.loc[ix, var] = temp[k].title().strip()
+                    DF.loc[ix, var] = temp[k].strip()
             except:
                 continue
 
@@ -221,7 +221,7 @@ def cleanup(DF):
     """
 
     for var in DF.columns:
-        for char in ['[',']','\'','"']:
+        for char in ['[',']']:
             DF[var] = DF[var].map(lambda x: str(x).replace(char, ""))
 
 
@@ -278,7 +278,8 @@ def output(filename="Composite-Responses"):
 
     output.fillna("NA", inplace=True)                                           # Fill NA values with 'NA'
     os.chdir("../99_Composite-CSV")                                             # Move to landing directory
-    output.to_csv("{}.csv".format(filename), index=False)                       # Push to CSV
+
+    output.to_csv("{}.csv".format(filename), index=False, encoding="utf-8-sig")          
     os.chdir("../..")
 
 
@@ -342,5 +343,5 @@ def parse_responses(DATA, IX, LOG):
         LOG.write("No race values provided for {}...{}\n".format(IX, type(e)))
         
     cleanup(big_kahuna)
-    big_kahuna.to_csv(os.path.join(output_path, filename), index=False)
+    big_kahuna.to_csv(os.path.join(output_path, filename), index=False, encoding="utf-8-sig")
 
