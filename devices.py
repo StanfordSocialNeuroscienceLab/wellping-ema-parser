@@ -70,4 +70,4 @@ def push_devices(DF, output_directory, output_name):
     clean = device_cleanup(DF)                                                              # Clean device DF w/ helper
     os.chdir(output_directory)                                                              # Direct DF to output dir
     output_name = "{}_device_info.csv".format(output_name)                                  # Format file name
-    clean.to_csv(output_name, index=False)                                                  # Push CSV to directory
+    clean.to_csv(output_name, index=False, encoding="utf-8-sig")                            # Push CSV to directory
