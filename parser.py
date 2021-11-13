@@ -115,20 +115,99 @@ def derive_answers(SUBSET, LOG, USER):
     answers = answers.pivot(index="pingId", columns="questionId", values="value").reset_index()
     answers.rename(columns={'pingId':'id'}, inplace=True)
 
-    try:
-        parse_race(answers)
-    except Exception as e:
-        LOG.write(f"\nCaught @ {USER} + parse_race: {e}\n\n")
-
     return answers
 
 
 def parse_nominations(DF):
     """
-    
+    DF =>
+
+    This function is named nominations ... e.g., Dean Baltiansky
+
+    The following columns are parsed...
+        * SU_Nom => 1,2,3
+        * SU_Nom_None_Nom => 1,2,3
+        * NSU_Rel => 1,2,3
+        * NSU_Nom_None_Nom => 1,2,3
+
+    Functions inplace, no return
     """
 
-    pass
+    voi = {'SU_Nom': 'SU_Nom_{}',
+           'SU_Nom_None_Nom': 'SU_Nom_None_Nom_{}',
+           'NSU_Rel': 'NSU{}_Rel',
+           'NSU_Nom_None_Nom': 'NSU{}_None_Rel'}
+
+    for parent in list(voi.keys()):
+        for index, response in enumerate(DF.loc[:, parent]):
+            try:
+                temp = response.split(',')
+            except:
+                temp = response
+
+            for k in [1, 2, 3]:
+                new_var = voi[parent].format(k)
+                DF[new_var] = [None] * len(DF)
+
+                try:
+                    if k == 0:
+                        keep = temp[k].strip("[").strip()
+                    elif k == 1:
+                        keep = temp[k].strip()
+                    elif k == 2:
+                        keep = temp[k].strip("]").strip()
+
+                    DF.loc[index, new_var] = keep
+
+                except:
+                    continue
+
+
+def parse_interaction_types(DF, LOG, USER):
+    """
+    DF =>
+    LOG =>
+    USER =>
+
+    This function is for interaction types ... e.g., friend, teammate
+    We'll isolate responses marked True
+
+    The following columns are parsed...
+        * NSU{[1,2,3]}_interaction
+        * SU{[1,2,3]}_interaction
+
+    Functions inplace, no return
+    """
+
+    voi = ["SU{}_interaction", "NSU{}_interaction"]
+
+    for variable in voi:
+        for k in [1,2,3]:
+            temp_var = variable.format(k)
+
+            try:
+                temp = DF.loc[:, temp_var]
+            except Exception as e:
+                temp = DF
+                LOG.write(f"Caught @ {USER} + interaction_types: {e}\n\n")
+
+            for idx, response in enumerate(temp):
+                real_values = []
+
+                try:
+                    clean = response.strip("[").strip("]").split("]")
+                except:
+                    continue
+
+                for item in clean:
+                    if "True" in item:
+                        item = item.strip(",").strip("[").split(",")
+                        real_values.append(item[0].strip("["))
+
+                try:
+                    DF.loc[idx, temp_var] = str(real_values)
+                except:
+                    DF.loc[idx, temp_var] = "FAILED TO PARSE"
 
 
 def parse_race(DF):
@@ -179,11 +258,26 @@ def parse_responses(KEY, SUBSET, LOG, OUTPUT_DIR):
     try:
         answers = derive_answers(SUBSET=SUBSET, LOG=LOG, USER=username)
     except Exception as e:
-        LOG.write(f"\nCaught @ {username}: {e}\n\n")
+        LOG.write(f"\nCaught @ {username} + derive_answers: {e}\n\n")
+
+    try:
+        parse_race(answers)
+    except Exception as e:
+        LOG.write(f"\nCaught @ {username} + parse_race: {e}\n\n")
+
+    try:
+        parse_nominations(answers)
+    except Exception as e:
+        LOG.write(f"\nCaught @ {username} + parse_nominations: {e}\n\n")
+
+    try:
+        parse_interaction_types(answers, LOG, username)
+    except Exception as e:
+        LOG.write(f"\nCaught @ {username} + interaction_types: {e}\n\n")
 
     try:
         pings = derive_pings(SUBSET=SUBSET, KEY=KEY)
     except Exception as e:
-        LOG.write(f"\nCaught @ {username}: {e}\n\n")
+        LOG.write(f"\nCaught @ {username} + derive_pings: {e}\n\n")
 
     return output(KEY, pings, answers, OUTPUT_DIR)
