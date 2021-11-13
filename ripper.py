@@ -48,12 +48,12 @@ with open(f"{output_name}.txt", "w") as log:
     print("\nParsing EMA responses....")
     for ix in tqdm(range(len(keys_outer))):                             # Loop through user names and parse data
         temp = data[keys_outer[ix]]                                     # See wrapper for helper function implementation
-        username = keys_outer[ix].split('-')[0]
+        username = keys_outer[ix]
 
         try:
             parse_responses(temp, username, log)
         except Exception as e:
-            #print(e)
+            print(e)
             parent_errors.append(username)
             continue
 
