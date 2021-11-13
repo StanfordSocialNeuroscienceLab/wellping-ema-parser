@@ -63,7 +63,7 @@ def output(KEY, PINGS, ANSWERS, OUTPUT_DIR):
 
 # ----- Answers
 
-def derive_answers(SUBSET):
+def derive_answers(SUBSET, LOG, USER):
     """
     
     """
@@ -73,7 +73,8 @@ def derive_answers(SUBSET):
             return "PNA"
 
         try:
-            return list(dict(DF['data'].values()))
+            temp = dict(DF['data']).values()
+            return list(temp)
         except:
             return None
 
@@ -88,20 +89,36 @@ def derive_answers(SUBSET):
 
         if temp[0] == "\'":
             temp = temp[1:]
+        elif temp[0] == "\"":
+            temp = temp[1:]
 
         if temp[-1] == "\'":
+            temp = temp[:-1]
+        elif temp[-1] == "\"":
             temp = temp[:-1]
 
         return temp
 
     answers = pd.DataFrame(SUBSET['answers'])
 
-    answers['value'] = answers.apply(isolate_values, axis=1)
-    answers['value'] = answers['value'].apply(lambda x: cleanup_values(x))
+    try:
+        answers['value'] = answers.apply(isolate_values, axis=1)
+    except Exception as e:
+        LOG.write(f"\nCaught @ {USER} + isolate_values: {e}\n\n")
+
+    try:
+        answers['value'] = answers['value'].apply(lambda x: cleanup_values(x))
+    except Exception as e:
+        LOG.write(f"\nCaught @ {USER} + cleanup_values: {e}\n\n")
 
     answers.drop(columns=['data', 'preferNotToAnswer'], inplace=True)
     answers = answers.pivot(index="pingId", columns="questionId", values="value").reset_index()
     answers.rename(columns={'pingId':'id'}, inplace=True)
+
+    try:
+        parse_race(answers)
+    except Exception as e:
+        LOG.write(f"\nCaught @ {USER} + parse_race: {e}\n\n")
 
     return answers
 
@@ -130,7 +147,11 @@ def parse_race(DF):
         except:
             return None
 
-    DF['Race'] = DF['Race'].apply(lambda x: isolate_race_value(x))
+    try:
+        check = list(DF['Race'])
+        DF['Race'] = DF['Race'].apply(lambda x: isolate_race_value(x))
+    except:
+        DF['Race'] = [None] * len(DF)
 
 
 # ----- Pings
@@ -156,18 +177,13 @@ def parse_responses(KEY, SUBSET, LOG, OUTPUT_DIR):
     username = KEY.split('-')[0]
 
     try:
-        answers = derive_answers(SUBSET=SUBSET)
+        answers = derive_answers(SUBSET=SUBSET, LOG=LOG, USER=username)
     except Exception as e:
-        LOG.write(f"Caught @ {username}: {e}\n")
-
-    try:
-        parse_race(answers)
-    except Exception as e:
-        LOG.write(f"Caught @ {username}: {e}\n")
+        LOG.write(f"\nCaught @ {username}: {e}\n\n")
 
     try:
         pings = derive_pings(SUBSET=SUBSET, KEY=KEY)
     except Exception as e:
-        LOG.write(f"Caught @ {username}: {e}\n")
+        LOG.write(f"\nCaught @ {username}: {e}\n\n")
 
     return output(KEY, pings, answers, OUTPUT_DIR)
