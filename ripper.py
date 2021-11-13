@@ -1,90 +1,63 @@
 #!/bin/python3
 
 """
-WellPing EMA Parser - Wrapper Script
 
-About this script
-    * Run `python3 ripper.py { target_directory }`
-    * This script will create individual CSVs for each subject in the 89 directory
-    * An aggregated CSV is saved in the 99 directory
-
-Ian Richard Ferguson | Stanford University
 """
 
-# ---------- IMPORTS
-import json, sys, os
+# ----- Imports
+import os, sys, json
+from time import sleep
+from tqdm import tqdm
 import pandas as pd
-from parser import *                                                    # Cowboy Emoji
-from devices import *
-
-# --------- FILE SYSTEM HIERARCHY
-there = os.path.join("{}/{}/".format(os.getcwd(), sys.argv[1]))         # Output directory
-
-if not os.path.isdir(there):
-    print("\n{} is invalid path...".format(there))                      # Confirm path is correct
-    sys.exit(1)
-
-setup(there)                                                            # Build these directories if they don't exist
-participantDirectory = os.path.join(there, "89_Participant-Files")      # Define landing directory for individual CSVs
-compositeDirectory = os.path.join(there, "99_Composite-CSV")            # Define landing directory for final output
+from parser import setup, isolate_json_file, parse_responses
 
 
-# --------- READ IN JSON
-os.chdir(there)
-temp_name=iso_JSON(there)
+# ----- Run Script
+def main():
+      target_path = sys.argv[1]
+      setup(target_path)
+      sub_data, output_filename = isolate_json_file(target_path)
 
-with open(temp_name, "r") as incoming:
-    data=json.load(incoming)
-    data=data.copy()
+      subject_output_directory = os.path.join(".", target_path, "00-Subjects")
+      aggregate_output_directory = os.path.join(".", target_path, "01-Aggregate")
+
+      with open(sub_data) as incoming:
+            with open(f"./{target_path}/{output_filename}.txt", "w") as log:
+                  data = json.load(incoming)
+
+                  keepers = []
+                  parent_errors = {}
+
+                  print("\nParsing participant data...\n")
+                  sleep(1)
+
+                  for key in tqdm(list(data.keys())):
+                        subset = data[key]
+                        
+                        try:
+                              parsed_data = parse_responses(key, subset, log, subject_output_directory)
+                        except Exception as e:
+                              log.write(f"Caught @ {key.split('-')[0]}: {e}")
+                              #parent_errors[key] = subset
+                              continue
+
+                        keepers.append(parsed_data)
+
+                  sleep(1)
+                  print("\nAggregating participant data...\n")
+
+                  try:
+                        aggregate = pd.concat(keepers)
+                        aggregate.to_csv(f'./{target_path}/01-Aggregate/{output_filename}.csv')
+                  except:
+                        print("\nNo objects to concatenate...\n")
+
+                  print("\nSaving parent errors...\n")
+
+                  with open(f'./{target_path}/01-Aggregate/parent-errors.json', 'w') as outgoing:
+                        json.dump(parent_errors, outgoing, indent=4)
 
 
-# -------- LOOP THROUGH PARSER FUNCTION
-output_name=temp_name[:-5]
+if __name__ == "__main__":
+      main()
 
-with open(f"{output_name}.txt", "w") as log:
-    keys_outer = list(data.keys())                                      # Isolate participant user names
-    parent_errors = []
-
-    print("\nParsing EMA responses....")
-    for ix in tqdm(range(len(keys_outer))):                             # Loop through user names and parse data
-        temp = data[keys_outer[ix]]                                     # See wrapper for helper function implementation
-        username = keys_outer[ix]
-
-        try:
-            parse_responses(temp, username, log)
-        except Exception as e:
-            #print(e)
-            parent_errors.append(username)
-            continue
-
-    print("\nAll participants' data parsed...")
-
-sleep(1)
-print("\nCombining all files...")
-
-sleep(1)
-output(output_name)                                                     # Push clean CSV to output directory
-
-# -------- LOOP THROUGH DEVICE ID FUNCTION
-devices = pd.DataFrame()                                                # Empty devices DF to append into
-print('\nScraping device information...')
-
-for ix in tqdm(range(len(keys_outer))):
-    temp = data[keys_outer[ix]]
-    username = keys_outer[ix]
-    devices = devices.append(parse_devices(temp, username),              # Parse participant device info + append to DF
-                             ignore_index=True, sort=False)
-
-push_devices(devices,                                                    # Push devices CSV to output directory
-            output_directory=(there + "/99_Composite-CSV/"),
-            output_name=output_name)
-
-try:
-    with open("parent_errors.json", "w") as outgoing:
-        print("\nSaving JSON file containing existential errors...")
-        temp = {sub: data[sub] for sub in parent_errors}
-        json.dump(temp, outgoing, indent=4)
-except:
-    print("You're here:\t\t{}".format(os.getcwd()))
-
-print("\nAll files combined!")
