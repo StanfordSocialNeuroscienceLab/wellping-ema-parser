@@ -33,12 +33,16 @@ def main():
 
                   for key in tqdm(list(data.keys())):
                         subset = data[key]
+
+                        if len(subset['answers']) == 0:
+                              parent_errors[key] = subset
+                              continue
                         
                         try:
                               parsed_data = parse_responses(key, subset, log, subject_output_directory)
                         except Exception as e:
-                              log.write(f"Caught @ {key.split('-')[0]}: {e}")
-                              #parent_errors[key] = subset
+                              log.write(f"\nCaught @ {key.split('-')[0]}: {e}\n\n")
+                              parent_errors[key] = subset
                               continue
 
                         keepers.append(parsed_data)
