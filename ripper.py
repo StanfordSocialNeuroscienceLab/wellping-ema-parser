@@ -42,7 +42,6 @@ def main():
                               parsed_data = parse_responses(key, subset, log, subject_output_directory)
                         except Exception as e:
                               log.write(f"\nCaught @ {key.split('-')[0]}: {e}\n\n")
-                              parent_errors[key] = subset
                               continue
 
                         keepers.append(parsed_data)
@@ -52,7 +51,8 @@ def main():
 
                   try:
                         aggregate = pd.concat(keepers)
-                        aggregate.to_csv(f'./{target_path}/01-Aggregate/{output_filename}.csv')
+                        aggregate.to_csv(f'./{target_path}/01-Aggregate/{output_filename}.csv',
+                                          index=False, encoding="utf-8-sig")
                   except:
                         print("\nNo objects to concatenate...\n")
 
