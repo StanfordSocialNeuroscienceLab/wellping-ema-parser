@@ -10,6 +10,7 @@ from time import sleep
 from tqdm import tqdm
 import pandas as pd
 from parser import setup, isolate_json_file, parse_responses
+from devices import parse_device_info
 
 
 # ----- Run Script
@@ -51,7 +52,7 @@ def main():
 
                   try:
                         aggregate = pd.concat(keepers)
-                        aggregate.to_csv(f'./{target_path}/01-Aggregate/{output_filename}.csv',
+                        aggregate.to_csv(f'./{target_path}/01-Aggregate/pings_{output_filename}.csv',
                                           index=False, encoding="utf-8-sig")
                   except:
                         print("\nNo objects to concatenate...\n")
@@ -60,6 +61,28 @@ def main():
 
                   with open(f'./{target_path}/01-Aggregate/parent-errors.json', 'w') as outgoing:
                         json.dump(parent_errors, outgoing, indent=4)
+
+                  print("\nParsing device information...\n")
+
+                  with open(f"./{target_path}/device-error-log.txt", 'w') as log:
+
+                        device_output = []
+
+                        for key in tqdm(list(data.keys())):
+                              username = key.split('-')[0]
+
+                              try:
+                                    subset = data[key]
+                                    device_output.append(parse_device_info(subset))
+                              except Exception as e:
+                                    log.write(f"\nCaught {username} @ device parser: {e}\n\n")
+
+                        devices = pd.concat(device_output)
+                        devices.to_csv(f'./{target_path}/01-Aggregate/devices_{output_filename}.csv',
+                                      index=False, encoding="utf-8-sig")
+
+                  sleep(1)
+                  print("\nAll responses + devices parsed\n")
 
 
 if __name__ == "__main__":
