@@ -5,9 +5,17 @@ About this Script
 
 """
 
+"""
+Running To-Do
+
+* Check in w/Sam regarding interaction variables
+* Parse out device information
+"""
+
 # ----------- Imports
 import os, pathlib
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 from time import sleep
 
@@ -138,29 +146,33 @@ def parse_nominations(DF):
            'NSU_Rel': 'NSU{}_Rel',
            'NSU_Nom_None_Nom': 'NSU{}_None_Rel'}
 
-    for parent in list(voi.keys()):
-        for index, response in enumerate(DF.loc[:, parent]):
+    for parent in voi:
+        for k in [1, 2, 3]:
+            new_var = parent.format(k)
+            DF[new_var] = [None] * len(DF)
+
+        for ix, value in enumerate(DF[parent]):
             try:
-                temp = response.split(',')
+                check_nan = np.isnan(value)
+                continue
             except:
-                temp = response
-
-            for k in [1, 2, 3]:
-                new_var = voi[parent].format(k)
-                DF[new_var] = [None] * len(DF)
-
-                try:
-                    if k == 0:
-                        keep = temp[k].strip("[").strip()
-                    elif k == 1:
-                        keep = temp[k].strip()
-                    elif k == 2:
-                        keep = temp[k].strip("]").strip()
-
-                    DF.loc[index, new_var] = keep
-
-                except:
+                if value is None:
                     continue
+                elif value == "PNA":
+                    continue
+
+            value = value.replace("\"", "").split("\',")
+
+            for k in range(len(value)):
+                new_var = parent.format(k+1)
+                new_val = value[k]
+
+                for char in ["[", "]"]:
+                    new_val = new_val.replace(char, "")
+
+                new_val = new_val.strip().replace("\'", "")
+
+                DF.loc[ix, new_var] = new_val
 
 
 def parse_interaction_types(DF, LOG, USER):
@@ -270,10 +282,14 @@ def parse_responses(KEY, SUBSET, LOG, OUTPUT_DIR):
     except Exception as e:
         LOG.write(f"\nCaught @ {username} + parse_nominations: {e}\n\n")
 
+    # ---- NOTE: Interaction variables don't seem to be included in this iteration of the app
+
+    """
     try:
         parse_interaction_types(answers, LOG, username)
     except Exception as e:
         LOG.write(f"\nCaught @ {username} + interaction_types: {e}\n\n")
+    """
 
     try:
         pings = derive_pings(SUBSET=SUBSET, KEY=KEY)
