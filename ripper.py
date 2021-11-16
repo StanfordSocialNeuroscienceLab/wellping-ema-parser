@@ -102,6 +102,7 @@ def main():
                         # Same process as before, we'll loop through each subject
                         for key in tqdm(list(data.keys())):
 
+
                               username = key.split('-')[0]                    # Isolate username from key naming convention
 
                               try:
