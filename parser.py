@@ -3,6 +3,12 @@
 """
 About this Script
 
+These helper functions convert *long* participant responses (derived from a JSON file)
+into *wide* particticipant responses, such that one row in a DataFrame represents a complete
+ping. Several of these functions can be better optimized (stripping out leading/trailing quoation
+marks is a fine example) ... this project is fully functional as of 11/16/2021
+
+Ian Ferguson | Stanford University
 """
 
 # ----------- Imports
@@ -265,53 +271,6 @@ def parse_nominations(DF):
     return DF
 
 
-def parse_interaction_types(DF, LOG, USER):
-    """
-    DF => Dataframe object
-    LOG => Text file to log errors / exceptions
-    USER => Isolated username, to be used in error log if necessary
-
-    This function is for interaction types ... e.g., friend, teammate
-    We'll isolate responses marked True
-
-    The following columns are parsed...
-        * NSU{[1,2,3]}_interaction
-        * SU{[1,2,3]}_interaction
-    """
-
-    voi = ["SU{}_interaction", "NSU{}_interaction"]
-
-    for variable in voi:                                                    #
-        for k in [1,2,3]:                                                   #
-            temp_var = variable.format(k)                                   #
-
-            try:
-                temp = DF.loc[:, temp_var]                                  #
-            except Exception as e:
-                temp = DF
-                LOG.write(f"Caught @ {USER} + interaction_types: {e}\n\n")  #
-
-            for idx, response in enumerate(temp):                           #
-                real_values = []                                            #
-
-                try:
-                    clean = response.strip("[").strip("]").split("]")       #
-                except:
-                    continue
-
-                for item in clean:
-                    if "True" in item:
-                        item = item.strip(",").strip("[").split(",")        #
-                        real_values.append(item[0].strip("["))              #
-
-                try:
-                    DF.loc[idx, temp_var] = str(real_values)                #
-                except:
-                    DF.loc[idx, temp_var] = "FAILED TO PARSE"
-
-    return DF
-
-
 def parse_race(DF):
     """
     DF => DataFrame object
@@ -409,15 +368,6 @@ def parse_responses(KEY, SUBSET, LOG, OUTPUT_DIR, KICKOUT):
         answers = parse_nominations(answers)                                # Isolate nomination responses
     except Exception as e:
         LOG.write(f"\nCaught @ {username} + parse_nominations: {e}\n\n")
-
-    # ---- NOTE: Interaction variables don't seem to be included in this iteration of the app
-
-    """
-    try:
-        parse_interaction_types(answers, LOG, username)
-    except Exception as e:
-        LOG.write(f"\nCaught @ {username} + interaction_types: {e}\n\n")
-    """
 
     try:
         pings = derive_pings(SUBSET=SUBSET, KEY=KEY)                        # Create pings DataFrame
