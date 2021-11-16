@@ -1,7 +1,14 @@
 #!/bin/python3
 
 """
+About this Script
 
+This script wraps helper functions defined in `parser.py` and
+is fully-executable from the command line
+
+NOTE: run the following at the command line `python3 ripper.py { target_directory }
+
+Ian Ferguson | Stanford University
 """
 
 # ----- Imports
@@ -15,29 +22,29 @@ from devices import parse_device_info
 
 # ----- Run Script
 def main():
-      target_path = sys.argv[1]                                               # 
-      setup(target_path)                                                      #
-      sub_data, output_filename = isolate_json_file(target_path)              #
+      target_path = sys.argv[1]                                               # Isolate relative path to data
+      setup(target_path)                                                      # Create output directories
+      sub_data, output_filename = isolate_json_file(target_path)              # Isolate JSON file
 
-      #
+      # These output directories will hold parsed data
       subject_output_directory = os.path.join(".", target_path, "00-Subjects")
       aggregate_output_directory = os.path.join(".", target_path, "01-Aggregate")
 
-      #
+      # I/O JSON file
       with open(sub_data) as incoming:
 
-            #
+            # I/O new text file for exception logging
             with open(f"./{target_path}/{output_filename}.txt", "w") as log:
                   
-                  data = json.load(incoming)                                  #
+                  data = json.load(incoming)                                  # Read JSON as Python dictionary
 
-                  keepers = []                                                #
-                  parent_errors = {}                                          #
+                  keepers = []                                                # Empty list to append subject data into
+                  parent_errors = {}                                          # Empty dictionary to append sparse data into
 
                   print("\nParsing participant data...\n")
                   sleep(1)
 
-                  #
+                  # Key == Subject and login ID (we'll separate these later)
                   for key in tqdm(list(data.keys())):
 
                         subset = data[key]                                    #
