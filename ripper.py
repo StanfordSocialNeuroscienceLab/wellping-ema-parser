@@ -15,7 +15,7 @@ from devices import parse_device_info
 
 # ----- Run Script
 def main():
-      target_path = sys.argv[1]                                               #
+      target_path = sys.argv[1]                                               # 
       setup(target_path)                                                      #
       sub_data, output_filename = isolate_json_file(target_path)              #
 
