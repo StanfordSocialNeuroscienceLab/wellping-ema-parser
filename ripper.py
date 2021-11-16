@@ -47,70 +47,78 @@ def main():
                   # Key == Subject and login ID (we'll separate these later)
                   for key in tqdm(list(data.keys())):
 
-                        subset = data[key]                                    #
+                        subset = data[key]                                    # Reduced data for one participant
 
-                        #
+                        # If participant completed no pings, push them to parent dict
                         if len(subset['answers']) == 0:
                               parent_errors[key] = subset
                               continue
                         
                         try:
 
-                              #
+                              # Run parse_responses function to isolate participant data
                               parsed_data = parse_responses(key, subset, log, 
                                                             subject_output_directory, True)
 
                         except Exception as e:
 
-                              #
+                              # Catch exceptions as they occur
                               log.write(f"\nCaught @ {key.split('-')[0]}: {e}\n\n")
                               continue
 
-                        keepers.append(parsed_data)                           #
+                        keepers.append(parsed_data)                           # Add participant DF to keepers list
 
                   sleep(1)
                   print("\nAggregating participant data...\n")
 
                   try:
 
-                        #
+                        # Stack all DFs into one
                         aggregate = pd.concat(keepers)
+
+                        # Push to local CSV
                         aggregate.to_csv(f'./{target_path}/01-Aggregate/pings_{output_filename}.csv',
                                           index=False, encoding="utf-8-sig")
+
                   except:
+
+                        # Something has gone wrong here and you have no participant data ... check the log
                         print("\nNo objects to concatenate...\n")
+                        sys.exit(1)
 
                   print("\nSaving parent errors...\n")
 
-                  #
+                  # Push parent errors (no pings) to local JSON
                   with open(f'./{target_path}/01-Aggregate/parent-errors.json', 'w') as outgoing:
                         json.dump(parent_errors, outgoing, indent=4)
 
                   print("\nParsing device information...\n")
 
-                  #
+                  # I/O new text file for device parsing errors
                   with open(f"./{target_path}/device-error-log.txt", 'w') as log:
 
-                        device_output = []                                    #
+                        device_output = []                                    # Empty list to append into
 
-                        #
+                        # Same process as before, we'll loop through each subject
                         for key in tqdm(list(data.keys())):
 
-                              username = key.split('-')[0]                    #
+                              username = key.split('-')[0]                    # Isolate username from key naming convention
 
                               try:
 
-                                    #
+                                    # Isolate participant dictionary
                                     subset = data[key]
                                     device_output.append(parse_device_info(subset))
 
                               except Exception as e:
 
-                                    #
+                                    # Catch exceptions as they occur
                                     log.write(f"\nCaught {username} @ device parser: {e}\n\n")
 
-                        #
+                        # Stack participant device info into one DF
                         devices = pd.concat(device_output)
+
+                        # Push to local CSV
                         devices.to_csv(f'./{target_path}/01-Aggregate/devices_{output_filename}.csv',
                                       index=False, encoding="utf-8-sig")
 
