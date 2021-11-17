@@ -351,7 +351,7 @@ def derive_pings(SUBSET, KEY):
 # ----- Concat
 def agg_drop_duplicates(DF):
     """
-    
+    NOTE: This helper is functional but not in use
     """
 
     users = list(DF['username'].unique())
