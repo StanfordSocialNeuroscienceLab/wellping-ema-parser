@@ -11,12 +11,18 @@ NOTE: run the following at the command line `python3 ripper.py { target_director
 Ian Ferguson | Stanford University
 """
 
+"""
+Running To-Do
+
+* Duplication issue (same as over the summer ... see how we fixed that on safe branch)
+"""
+
 # ----- Imports
 import os, sys, json
 from time import sleep
 from tqdm import tqdm
 import pandas as pd
-from parser import setup, isolate_json_file, parse_responses
+from parser import agg_drop_duplicates, setup, isolate_json_file, parse_responses
 from devices import parse_device_info
 
 
@@ -76,13 +82,16 @@ def main():
                         # Stack all DFs into one
                         aggregate = pd.concat(keepers)
 
+                        aggregate = agg_drop_duplicates(aggregate)
+
                         # Push to local CSV
                         aggregate.to_csv(f'./{target_path}/01-Aggregate/pings_{output_filename}.csv',
                                           index=False, encoding="utf-8-sig")
 
-                  except:
+                  except Exception as e:
 
                         # Something has gone wrong here and you have no participant data ... check the log
+                        print(f"{e}")
                         print("\nNo objects to concatenate...\n")
                         sys.exit(1)
 
