@@ -82,8 +82,6 @@ def main():
                         # Stack all DFs into one
                         aggregate = pd.concat(keepers)
 
-                        aggregate = agg_drop_duplicates(aggregate)
-
                         # Push to local CSV
                         aggregate.to_csv(f'./{target_path}/01-Aggregate/pings_{output_filename}.csv',
                                           index=False, encoding="utf-8-sig")
@@ -117,7 +115,7 @@ def main():
 
                                     # Isolate participant dictionary
                                     subset = data[key]
-                                    device_output.append(parse_device_info(subset))
+                                    device_output.append(parse_device_info(subset, key))
 
                               except Exception as e:
 
