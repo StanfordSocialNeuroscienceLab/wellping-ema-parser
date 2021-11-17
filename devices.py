@@ -3,30 +3,36 @@
 """
 About this Script
 
+This helper function flattens participant subject data into a one-row
+DataFrame. This info is parsed for each subject and saved locally as a CSV
+
+Ian Ferguson | Stanford University
 """
 
 
 # ----- Imports
 import pandas as pd
-import os
 
 
 # ----- Functions
-def parse_device_info(SUBSET):
+def parse_device_info(SUBSET, KEY):
     """
     
     """
 
-    devices = SUBSET['user']                                            #
-    username = devices['username']                                      #
+    devices = SUBSET['user']                                            # Isolate device information from JSON
+    username = devices['username']                                      # Pull in username from data dictionary
+    login_time = KEY.split('-')[-1]                                     # Isolate subject login time from data key
 
-    master = pd.DataFrame({'username':username}, index=[0])             #
+
+    master = pd.DataFrame({'username':username}, index=[0])             # Parent DF to merge into
 
     for key in ['device', 'app']:
-        temp = devices['installation'][key]                             #
-        temp_frame = pd.DataFrame(temp, index=[0])                      #
-        temp_frame['username'] = username                               #
+        temp = devices['installation'][key]                             # Isloate sub-keys from dictionary
+        temp_frame = pd.DataFrame(temp, index=[0])                      # Flatten wide to long
+        temp_frame['username'] = username                               # Isolate username
+        temp_frame['login_time'] = login_time                           # JavaScript derived login time
         
-        master = master.merge(temp_frame, on='username')                #
+        master = master.merge(temp_frame, on='username')                # Merge with parent DF on username
 
     return master
