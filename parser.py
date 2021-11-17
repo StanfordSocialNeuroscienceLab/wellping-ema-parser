@@ -156,6 +156,10 @@ def derive_answers(SUBSET, LOG, USER):
         # Write to error log
         LOG.write(f"\nCaught @ {USER} + cleanup_values: {e}\n\n")
 
+    answers = answers.drop_duplicates(subset="date", keep="first").reset_index(drop=True)
+
+    answers["IX"] = answers.groupby("questionId", as_index=False).cumcount()
+
     # Drop extraneous columns
     answers.drop(columns=['data', 'preferNotToAnswer'], inplace=True)
 
@@ -334,9 +338,32 @@ def derive_pings(SUBSET, KEY):
 
     pings = pd.DataFrame(SUBSET['pings'])                                   # Convert JSON to DataFrame
     pings['username'] = KEY.split('-')[0]                                   # Add username column
+    
+    login_node = KEY.split('-')[1:]
+    login_node = "".join(login_node)
 
-    return pings.loc[:, ['username', 'streamName', 'startTime', 
+    pings['login-node'] = login_node
+
+    return pings.loc[:, ['username', 'login-node', 'streamName', 'startTime', 
                         'notificationTime', 'endTime', 'id', 'tzOffset']]
+
+
+# ----- Concat
+def agg_drop_duplicates(DF):
+    """
+    
+    """
+
+    users = list(DF['username'].unique())
+
+    keepers = []
+
+    for user in tqdm(users):
+        temp = DF[DF['username'] == user].reset_index(drop=True)
+        temp = temp.drop_duplicates(subset="id", keep="first").reset_index(drop=True)
+        keepers.append(temp)
+
+    return pd.concat(keepers)
 
 
 # ----- Run
