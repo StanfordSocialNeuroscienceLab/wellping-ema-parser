@@ -17,7 +17,14 @@ import pandas as pd
 # ----- Functions
 def parse_device_info(SUBSET, KEY):
     """
-    
+    SUBSET => Particpant's reduced JSON file (as Python dictionary)
+    KEY => Key from the JSON data dictionary
+
+    This function flattens user device info into a single-row
+    DataFrame object. This is returned and stacked with others
+    in the main function
+
+    Returns DataFrame object
     """
 
     devices = SUBSET['user']                                            # Isolate device information from JSON
