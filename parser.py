@@ -118,26 +118,28 @@ def sanity_check(JSON, OUTPUT_DIR):
     Returns nothing, functions inplace
     """
 
+    # Read in subject data JSON as dictionary
     with open(JSON) as incoming:
         data = json.load(incoming)
 
-    keys = list(data.keys())
-    sub_ids = set([x.split('-')[0] for x in keys])
+    keys = list(data.keys())                                            # List of keys from JSON
+    sub_ids = set([x.split('-')[0] for x in keys])                      # Unique subject IDs
 
-    output_dict = {}
+    output_dict = {}                                                    # Empty dictionary to append into
 
     print("\nIdentifying duplicate subject responses...\n")
 
     for sub in tqdm(sub_ids):
-        instances = [x for x in keys if sub in x]
+        instances = [x for x in keys if sub in x]                       # Number of responses from single sub
 
-        if len(instances) > 1:
+        if len(instances) > 1:                                          # Add to output dict if multiples exist
             output_dict[sub] = {}
             output_dict[sub]['count'] = len(instances)
             output_dict[sub]['keys'] = instances
 
     print("\nSaving response-duplicates JSON file...\n")
 
+    # Push to local JSON file
     with open(os.path.join(OUTPUT_DIR, "response-duplicates.json"), "w") as outgoing:
         json.dump(output_dict, outgoing, indent=4)
 
