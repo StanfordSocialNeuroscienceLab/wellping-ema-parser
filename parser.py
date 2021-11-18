@@ -12,7 +12,7 @@ Ian Ferguson | Stanford University
 """
 
 # ----------- Imports
-import os, pathlib
+import os, pathlib, json
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
@@ -44,6 +44,10 @@ def setup(PATH):
                                                                      parents=True)
 
             sleep(1.5)
+
+        else:
+
+            print(f"{output_path} exists...")
 
 
 def isolate_json_file(PATH):
@@ -98,6 +102,44 @@ def output(KEY, PINGS, ANSWERS, OUTPUT_DIR, KICKOUT):
         composite_dataframe.to_csv(output_name, index=False, encoding="utf-8-sig")
 
     return composite_dataframe
+
+
+def sanity_check(JSON, OUTPUT_DIR):
+    """
+    JSON => Relative path to data dictionary
+    OUTPUT_DIR => Relative path to output directory
+
+    This function performs the following operations
+        * Read in JSON file as dictionary
+        * Isolate list of unique subject ID's
+        * If subject ID appears more than once, store in JSON
+        * Kick out data JSON with indent, kick out duplicate JSON
+
+    Returns nothing, functions inplace
+    """
+
+    with open(JSON) as incoming:
+        data = json.load(incoming)
+
+    keys = list(data.keys())
+    sub_ids = set([x.split('-')[0] for x in keys])
+
+    output_dict = {}
+
+    print("\nIdentifying duplicate subject responses...\n")
+
+    for sub in tqdm(sub_ids):
+        instances = [x for x in keys if sub in x]
+
+        if len(instances) > 1:
+            output_dict[sub] = {}
+            output_dict[sub]['count'] = len(instances)
+            output_dict[sub]['keys'] = instances
+
+    print("\nSaving response-duplicates JSON file...\n")
+
+    with open(os.path.join(OUTPUT_DIR, "response-duplicates.json"), "w") as outgoing:
+        json.dump(output_dict, outgoing, indent=4)
 
 
 # ----- Answers
@@ -180,7 +222,8 @@ def cleanup_values(x):
     """
 
     # Parse out parentheses
-    temp = str(x).replace('(', '').replace(')', '')
+    #temp = str(x).replace('(', '').replace(')', '')
+    temp = str(x)
 
     """
     The conditional statements below will strip out square brackets
