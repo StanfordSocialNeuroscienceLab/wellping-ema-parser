@@ -16,7 +16,7 @@ import os, sys, json
 from time import sleep
 from tqdm import tqdm
 import pandas as pd
-from parser import setup, isolate_json_file, parse_responses
+from parser import setup, sanity_check, isolate_json_file, parse_responses
 from devices import parse_device_info
 
 
@@ -29,6 +29,8 @@ def main():
       # These output directories will hold parsed data
       subject_output_directory = os.path.join(".", target_path, "00-Subjects")
       aggregate_output_directory = os.path.join(".", target_path, "01-Aggregate")
+
+      sanity_check(sub_data, aggregate_output_directory)
 
       # I/O JSON file
       with open(sub_data) as incoming:
