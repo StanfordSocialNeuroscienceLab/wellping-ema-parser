@@ -11,18 +11,12 @@ NOTE: run the following at the command line `python3 ripper.py { target_director
 Ian Ferguson | Stanford University
 """
 
-"""
-Running To-Do
-
-* Duplication issue (same as over the summer ... see how we fixed that on safe branch)
-"""
-
 # ----- Imports
 import os, sys, json
 from time import sleep
 from tqdm import tqdm
 import pandas as pd
-from parser import agg_drop_duplicates, setup, isolate_json_file, parse_responses
+from parser import setup, isolate_json_file, parse_responses
 from devices import parse_device_info
 
 
